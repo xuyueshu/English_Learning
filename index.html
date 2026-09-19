@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Learning · 电影剧本学习</title>
+<style>
+:root {
+  --bg: #f4f1ea;
+  --panel: #fbf9f4;
+  --paper: #fffdf8;
+  --text: #2b2620;
+  --text-soft: #6b6358;
+  --border: #e3ddd0;
+  --accent: #b3542f;
+  --accent-soft: #f3e2d8;
+  --shadow: 0 8px 30px rgba(80, 60, 30, .10);
+  --serif: Georgia, "Times New Roman", "Songti SC", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16181d;
+    --panel: #1d2026;
+    --paper: #20242b;
+    --text: #d8dce3;
+    --text-soft: #9098a5;
+    --border: #2e333d;
+    --accent: #e08a5e;
+    --accent-soft: #3a2c24;
+    --shadow: 0 8px 30px rgba(0, 0, 0, .45);
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  transition: background .25s, color .25s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 72px 20px 60px;
+}
+.header { text-align: center; max-width: 720px; margin-bottom: 44px; }
+.feather { font-size: 48px; line-height: 1; }
+.header h1 {
+  font-family: var(--serif);
+  font-size: 38px;
+  letter-spacing: 2px;
+  margin: 14px 0 10px;
+}
+.header p { color: var(--text-soft); font-size: 15px; line-height: 1.8; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 22px;
+  width: 100%;
+  max-width: 960px;
+}
+.card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 28px 26px 24px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 14px 40px rgba(80, 60, 30, .16);
+}
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), #d8a05a);
+}
+.card .tag {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 4px 12px;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+.card h2 {
+  font-family: var(--serif);
+  font-size: 25px;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.card .zh-title { font-size: 16px; color: var(--text-soft); margin-bottom: 14px; }
+.card .desc { font-size: 13.5px; line-height: 1.8; color: var(--text-soft); }
+.card .meta {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+.card .go {
+  color: var(--accent);
+  font-weight: 600;
+}
+.card:hover .go { letter-spacing: 1px; }
+.footer {
+  margin-top: 56px;
+  font-size: 12.5px;
+  color: var(--text-soft);
+  text-align: center;
+  line-height: 1.9;
+}
+@media (max-width: 600px) {
+  body { padding: 48px 16px 40px; }
+  .header h1 { font-size: 29px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="feather">🎬</div>
+  <h1>English Learning</h1>
+  <p>电影剧本精读 · 中英对照 · 点击查词与生词本<br>选择一部电影，开始今天的学习</p>
+</header>
+
+<main class="grid">
+  <a class="card" href="./forrest-gump/">
+    <span class="tag">Screenplay</span>
+    <h2>Forrest Gump</h2>
+    <div class="zh-title">阿甘正传（1994）</div>
+    <p class="desc">193 场戏、1077 段对白的逐句精读版。每句可单独显示中文翻译，也可一键展开全文对照；支持单词点击查词、发音、收藏与生词本。</p>
+    <div class="meta">
+      <span>193 scenes · 中英对照</span>
+      <span class="go">开始阅读 →</span>
+    </div>
+  </a>
+
+  <!--
+    以后新增电影时，复制上面的 .card 结构即可，例如：
+    <a class="card" href="./movie-folder/">
+      <span class="tag">Screenplay</span>
+      <h2>Movie Title</h2>
+      <div class="zh-title">中文名（年份）</div>
+      <p class="desc">简介文字……</p>
+      <div class="meta"><span>xx scenes · 中英对照</span><span class="go">开始阅读 →</span></div>
+    </a>
+  -->
+</main>
+
+<footer class="footer">
+  所有内容仅供个人英语学习使用 · Built with GitHub Pages
+</footer>
+
+</body>
+</html>
