@@ -2,7 +2,7 @@
 # Repeatedly run build_site.py until the data directory reaches the target count.
 # build_site.py skips articles whose data JSON already exists, so this is safe to restart.
 TARGET="$1"
-ROOT="/Users/youzhiqiang/Downloads/草稿/TheCottageFairy"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT" || exit 1
 
 while true; do
@@ -12,7 +12,7 @@ while true; do
     break
   fi
   echo "[$(date +%H:%M:%S)] have $count, target $TARGET, starting build..."
-  python3 -u "$ROOT/build_site.py" "$TARGET"
+  python3 -u "$ROOT/scripts/build_site.py" "$TARGET"
   echo "[$(date +%H:%M:%S)] build process exited with $?"
   sleep 2
 done

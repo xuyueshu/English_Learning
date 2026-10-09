@@ -26,12 +26,12 @@ def atomic_write_text(path: Path, content: str):
     os.replace(temporary, path)
 
 
-ROOT = Path(__file__).resolve().parent
-RAW_DIR = ROOT / "raw"
+ROOT = Path(__file__).resolve().parent.parent
+RAW_DIR = ROOT / "source" / "raw"
 DATA_DIR = ROOT / "data"
-TEXTS_DIR = ROOT / "texts"
+TEXTS_DIR = ROOT / "source" / "texts"
 CACHE_DIR = ROOT / ".zhcache"
-VIDEO_LIST = ROOT / "metadata" / "_video_list.txt"
+VIDEO_LIST = ROOT / "source" / "metadata" / "_video_list.txt"
 
 TAG = re.compile(r"<[^>]+>")
 TIMING_LINE = re.compile(r"^\d{2}:\d{2}:\d{2}\.\d{3} --> ")
@@ -237,7 +237,7 @@ def main():
 
     print(f"batch done: {processed}")
     subprocess.run(
-        [sys.executable, str(ROOT / "make_manifest.py")],
+        [sys.executable, str(ROOT / "scripts" / "make_manifest.py")],
         check=False,
     )
 

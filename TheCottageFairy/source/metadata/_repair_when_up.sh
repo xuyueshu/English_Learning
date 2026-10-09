@@ -2,7 +2,7 @@
 # Wait for the Google translate endpoint to recover, then run one repair pass.
 # Loops until repair reports "still empty: 0". Probing first avoids hammering
 # the API while it is rate-limiting us.
-ROOT="/Users/youzhiqiang/Downloads/草稿/TheCottageFairy"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT" || exit 1
 
 PROBE="https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q=good%20morning"
@@ -16,7 +16,7 @@ while true; do
   fi
 
   echo "[$(date +%H:%M:%S)] endpoint up, running repair pass..."
-  python3 -u "$ROOT/repair_translations.py"
+  python3 -u "$ROOT/scripts/repair_translations.py"
   result=$(python3 - <<'PY'
 import json, glob
 empty = 0
@@ -30,7 +30,7 @@ PY
   echo "[$(date +%H:%M:%S)] empty paragraphs remaining: $result"
   if [ "$result" = "0" ]; then
     echo "all translations filled"
-    python3 "$ROOT/make_manifest.py"
+    python3 "$ROOT/scripts/make_manifest.py"
     break
   fi
   sleep 3
