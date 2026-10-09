@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reading · The Cottage Fairy</title>
+  <style>
+    :root {
+      --paper: #f6f1e4;
+      --paper-deep: #efe7d3;
+      --ink: #2c2a26;
+      --ink-soft: #4a463f;
+      --muted: #8a8272;
+      --gold: #b08d3e;
+      --rule: #cbb98f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--paper-deep);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", "Songti SC", "Noto Serif SC", serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.75;
+    }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 56px 40px 72px;
+      background: var(--paper);
+      box-shadow: 0 24px 60px rgba(60, 48, 20, 0.14);
+    }
+
+    .back-nav {
+      margin-bottom: 28px;
+    }
+
+    .back-link {
+      display: inline-block;
+      font-size: 14px;
+      color: var(--ink-soft);
+      text-decoration: none;
+      transition: color 0.15s, transform 0.15s;
+    }
+
+    .back-link:hover {
+      color: var(--gold);
+      transform: translateX(-3px);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .kicker {
+      margin: 0 0 14px;
+      font-size: 12px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 3.6vw, 38px);
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .meta-date {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .divider {
+      height: 1px;
+      margin: 26px 0 0;
+      background: linear-gradient(to right, transparent, var(--rule), transparent);
+    }
+
+    .bilingual {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+    }
+
+    .column-en {
+      font-size: 18px;
+      color: var(--ink);
+    }
+
+    .column-zh {
+      font-size: 17px;
+      color: var(--ink-soft);
+    }
+
+    p {
+      margin: 0 0 26px;
+    }
+
+    .column-zh p {
+      text-align: justify;
+    }
+
+    .status {
+      padding: 40px 0;
+      text-align: center;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        padding: 36px 22px 48px;
+      }
+
+      .bilingual {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .column {
+        padding-bottom: 22px;
+        border-bottom: 1px dashed var(--rule);
+      }
+
+      .column-en {
+        font-size: 17px;
+      }
+
+      .column-zh {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <nav class="back-nav">
+      <a class="back-link" href="../index.html">← 返回目录 / Back to Library</a>
+    </nav>
+
+    <div class="status" id="status">正在加载…</div>
+
+    <header id="heading" hidden>
+      <p class="kicker">Bilingual Reading · 中英对照</p>
+      <h1 id="title"></h1>
+      <p class="meta-date" id="date"></p>
+      <div class="divider"></div>
+    </header>
+
+    <section class="bilingual" id="content" hidden>
+      <div class="column column-en" id="englishColumn"></div>
+      <div class="column column-zh" id="chineseColumn"></div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const videoId = params.get("id");
+
+    const status = document.getElementById("status");
+    const heading = document.getElementById("heading");
+    const content = document.getElementById("content");
+    const englishColumn = document.getElementById("englishColumn");
+    const chineseColumn = document.getElementById("chineseColumn");
+
+    if (!videoId) {
+      status.textContent = "缺少文章 ID / Missing article id.";
+    } else {
+      fetch(`../data/${videoId}.json`)
+        .then((response) => {
+          if (!response.ok) throw new Error("not found");
+          return response.json();
+        })
+        .then((article) => {
+          document.title = `${article.title} · The Cottage Fairy`;
+          document.getElementById("title").textContent = article.title;
+          document.getElementById("date").textContent = article.date || "";
+
+          article.en.forEach((paragraph) => {
+            const node = document.createElement("p");
+            node.textContent = paragraph;
+            englishColumn.appendChild(node);
+          });
+
+          article.zh.forEach((paragraph) => {
+            const node = document.createElement("p");
+            node.textContent = paragraph;
+            chineseColumn.appendChild(node);
+          });
+
+          status.hidden = true;
+          heading.hidden = false;
+          content.hidden = false;
+        })
+        .catch(() => {
+          status.textContent = "文章尚未生成或无法加载 / Article not available yet.";
+        });
+    }
+  </script>
+</body>
+</html>

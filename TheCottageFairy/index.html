@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Cottage Fairy · 中英阅读</title>
+  <style>
+    :root {
+      --paper: #f6f1e4;
+      --paper-deep: #efe7d3;
+      --ink: #2c2a26;
+      --ink-soft: #4a463f;
+      --muted: #8a8272;
+      --gold: #b08d3e;
+      --rule: #cbb98f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--paper-deep);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", "Songti SC", "Noto Serif SC", serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.75;
+    }
+
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 64px 40px 80px;
+      min-height: 100vh;
+      background: var(--paper);
+      box-shadow: 0 24px 60px rgba(60, 48, 20, 0.14);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .kicker {
+      margin: 0 0 14px;
+      font-size: 12px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 4.5vw, 44px);
+      font-weight: 600;
+    }
+
+    .subtitle {
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .divider {
+      height: 1px;
+      margin: 28px 0 32px;
+      background: linear-gradient(
+        to right,
+        transparent,
+        var(--rule),
+        transparent
+      );
+    }
+
+    .search {
+      width: 100%;
+      margin-bottom: 28px;
+      padding: 14px 18px;
+      font: inherit;
+      font-size: 16px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(176, 141, 62, 0.15);
+    }
+
+    .section-label {
+      margin: 0 0 14px;
+      font-size: 12px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .article-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .article-item {
+      border-bottom: 1px solid rgba(203, 185, 143, 0.5);
+    }
+
+    .article-item:last-child {
+      border-bottom: none;
+    }
+
+    .article-link {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      padding: 18px 6px;
+      text-decoration: none;
+      color: var(--ink);
+      transition: background 0.15s, padding-left 0.15s;
+    }
+
+    .article-link:hover {
+      background: rgba(176, 141, 62, 0.08);
+      padding-left: 14px;
+    }
+
+    .article-date {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.05em;
+    }
+
+    .article-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .article-title-zh {
+      display: block;
+      margin-top: 2px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .empty {
+      padding: 24px 6px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    footer {
+      margin-top: 56px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.18em;
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        padding: 44px 22px 56px;
+      }
+
+      .article-link {
+        flex-direction: column;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <p class="kicker">Bilingual Library · 中英对照文库</p>
+      <h1>The Cottage Fairy</h1>
+      <p class="subtitle">一边读她的田园随笔，一边学英语</p>
+      <div class="divider"></div>
+    </header>
+
+    <input
+      class="search"
+      id="searchInput"
+      type="search"
+      placeholder="搜索标题 / Search by title…"
+      aria-label="搜索文章"
+    />
+
+    <p class="section-label">Articles · 文章目录</p>
+    <ul class="article-list" id="articleList"></ul>
+    <p class="empty" id="emptyState" hidden>没有找到匹配的文章 / No matching articles.</p>
+
+    <footer>THE COTTAGE FAIRY · READ &amp; LEARN</footer>
+  </main>
+
+  <script>
+    const searchInput = document.getElementById("searchInput");
+    const articleList = document.getElementById("articleList");
+    const emptyState = document.getElementById("emptyState");
+
+    let articles = [];
+
+    function renderList(keyword = "") {
+      articleList.innerHTML = "";
+      const normalizedKeyword = keyword.trim().toLowerCase();
+      let visibleCount = 0;
+
+      articles.forEach((article) => {
+        const matches = article.title.toLowerCase().includes(normalizedKeyword);
+        if (!matches) return;
+        visibleCount += 1;
+
+        const item = document.createElement("li");
+        item.className = "article-item";
+
+        const link = document.createElement("a");
+        link.className = "article-link";
+        link.href = `pages/article.html?id=${article.id}`;
+
+        const date = document.createElement("span");
+        date.className = "article-date";
+        date.textContent = article.date || "—";
+
+        const title = document.createElement("span");
+        title.className = "article-title";
+        title.textContent = article.title;
+
+        link.appendChild(date);
+        link.appendChild(title);
+        item.appendChild(link);
+        articleList.appendChild(item);
+      });
+
+      emptyState.hidden = visibleCount !== 0;
+    }
+
+    fetch("manifest.json")
+      .then((response) => {
+        if (!response.ok) throw new Error("manifest missing");
+        return response.json();
+      })
+      .then((data) => {
+        articles = data;
+        renderList();
+      })
+      .catch(() => {
+        emptyState.hidden = false;
+        emptyState.textContent = "暂无已生成的文章 / No articles built yet.";
+      });
+
+    searchInput.addEventListener("input", () => {
+      renderList(searchInput.value);
+    });
+  </script>
+</body>
+</html>
