@@ -2,7 +2,8 @@
 """Build bilingual reading data from raw VTT files.
 
 - Reconstructs clean English from YouTube rolling captions.
-- Groups captions into readable paragraphs.
+- Groups captions into readable paragraphs, breaking on sentence
+  boundaries so a paragraph is never cut mid-sentence.
 - Translates each paragraph to Chinese via the public gtx endpoint.
 - Skips videos whose data file already exists, so it can be resumed in batches.
 """
@@ -101,51 +102,118 @@ def clean_sound_tags(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+SENTENCE_BOUNDARY = re.compile(r'''[.!?]["'’”]?(?:\s+|$)''')
+CLAUSE_BOUNDARY = re.compile(r'[,;:]["’”]?(?:\s+|$)')
+LEADING_PUNCTUATION = re.compile(r'^[\s.!?,;:]+')
+TARGET_PARAGRAPH_SECONDS = 45
+CLAUSE_GRACE_SECONDS = 12
+MAX_PARAGRAPH_SECONDS = 80
+
+
 def build_paragraphs(timed_pieces):
     paragraphs = []
     buffer = ""
-    last_start = None
-    marker_times = []
+    paragraph_start = None
+    armed = False
+
+    def close_paragraph(tail: str):
+        nonlocal buffer
+        head = buffer[: len(buffer) - len(tail)] if tail else buffer
+        cleaned = clean_sound_tags(head)
+        if cleaned:
+            paragraphs.append(cleaned)
+        buffer = LEADING_PUNCTUATION.sub("", tail).strip()
 
     for timestamp, piece in timed_pieces:
         if is_sound_marker(piece):
-            marker_times.append(piece)
             continue
-        if last_start is None:
-            last_start = timestamp
-        buffer = (buffer + " " + piece).strip()
-        if timestamp - last_start >= 45:
-            cleaned = clean_sound_tags(buffer)
-            if cleaned:
-                paragraphs.append(cleaned)
-            buffer = ""
-            last_start = timestamp
+        if paragraph_start is None:
+            paragraph_start = timestamp
+        buffer = f"{buffer} {piece}".strip()
+        elapsed = timestamp - paragraph_start
+        if not armed and elapsed >= TARGET_PARAGRAPH_SECONDS:
+            armed = True
+        if not armed:
+            continue
 
-    if buffer:
-        cleaned = clean_sound_tags(buffer)
-        if cleaned:
-            paragraphs.append(cleaned)
+        boundary = SENTENCE_BOUNDARY.search(piece)
+        if boundary is None and elapsed - TARGET_PARAGRAPH_SECONDS > CLAUSE_GRACE_SECONDS:
+            boundary = CLAUSE_BOUNDARY.search(piece)
+
+        if elapsed >= MAX_PARAGRAPH_SECONDS:
+            close_paragraph("")
+            paragraph_start = None
+            armed = False
+        elif boundary is not None:
+            close_paragraph(piece[boundary.end():])
+            paragraph_start = timestamp
+            armed = False
+
+    cleaned = clean_sound_tags(buffer)
+    if cleaned:
+        paragraphs.append(cleaned)
     return paragraphs
+
+
+GTX_URL = (
+    "https://translate.googleapis.com/translate_a/single"
+    "?client=gtx&sl=en&tl=zh-CN&dt=t&q="
+)
+# The dict-chrome-ex endpoint returns a bare ["translation"] list and is not
+# subject to the same rate limiting as the gtx single-segment endpoint.
+CHROME_URL = "https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=en&tl=zh-CN&q="
+CHROME_HEADERS = ["-H", "User-Agent: Mozilla/5.0"]
+
+
+def parse_translation(output: str) -> str:
+    if not output or output.lstrip().startswith("<"):
+        raise ValueError("rate-limit challenge page instead of JSON")
+    payload = json.loads(output)
+    if payload and isinstance(payload[0], str):
+        return payload[0]
+    return "".join(part[0] for part in payload[0] if part and part[0])
 
 
 def translate_paragraph(text: str) -> str:
     query = urllib.parse.quote(text)
-    url = (
-        "https://translate.googleapis.com/translate_a/single"
-        "?client=gtx&sl=en&tl=zh-CN&dt=t&q=" + query
-    )
-    for attempt in range(5):
-        try:
-            output = subprocess.run(
-                ["curl", "-s", url, "--max-time", "25"],
-                capture_output=True,
-                text=True,
-                check=True,
-            ).stdout
-            payload = json.loads(output)
-            return "".join(part[0] for part in payload[0] if part[0])
-        except Exception:
-            time.sleep(2 + attempt * 2)
+    endpoints = [
+        (["curl", "-s", GTX_URL + query, "--max-time", "25"], GTX_URL),
+        (
+            [
+                "curl",
+                "-s",
+                "-G",
+                "https://clients5.google.com/translate_a/t",
+                *CHROME_HEADERS,
+                "--max-time",
+                "25",
+                "--data-urlencode",
+                "client=dict-chrome-ex",
+                "--data-urlencode",
+                "sl=en",
+                "--data-urlencode",
+                "tl=zh-CN",
+                "--data-urlencode",
+                f"q={text}",
+            ],
+            CHROME_URL,
+        ),
+    ]
+    for attempt in range(4):
+        for command, _ in endpoints:
+            try:
+                output = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                ).stdout
+                translated = parse_translation(output)
+                if translated.strip():
+                    return translated
+            except Exception:
+                continue
+        time.sleep(2 + attempt * 2)
     return ""
 
 
