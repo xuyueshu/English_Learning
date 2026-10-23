@@ -90,10 +90,14 @@ def is_sound_marker(text: str) -> bool:
 
 
 SOUND_TAG = re.compile(r"\[(?:Music|Laughter|Applause|Song|Singing)\]", re.IGNORECASE)
+# YouTube's ASR replaces inaudible or musical sections with the literal
+# token "foreign" (often repeated); it is never real speech in these vlogs.
+ASR_FOREIGN = re.compile(r"\bforeign\b", re.IGNORECASE)
 
 
 def clean_sound_tags(text: str) -> str:
     text = SOUND_TAG.sub(" ", text)
+    text = ASR_FOREIGN.sub(" ", text)
     return re.sub(r"\s+", " ", text).strip()
 
 
